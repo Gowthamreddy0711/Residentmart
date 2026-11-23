@@ -19,6 +19,11 @@ const methodOverride =
 const bcrypt =
   require("bcrypt");
 
+const crypto =
+  require("crypto");
+
+require("dotenv").config();
+
 // ================= APP =================
 
 const app = express();
@@ -110,7 +115,9 @@ app.use(express.static(
 
 app.use(session({
 
-  secret: "residentmart",
+  secret:
+    process.env.SESSION_SECRET ||
+    crypto.randomBytes(32).toString("hex"),
 
   resave: false,
 
