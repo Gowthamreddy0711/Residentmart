@@ -1,0 +1,471 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+
+  <div class="row g-5">
+
+    <!-- IMAGE -->
+    <div class="col-md-6 text-center">
+
+      <img
+        src="<%= product.image %>"
+        class="img-fluid"
+        style="
+          max-height:450px;
+          object-fit:contain;
+        "
+      >
+
+    </div>
+
+    <!-- DETAILS -->
+    <div class="col-md-6">
+
+      <small class="text-muted">
+
+        <%= product.category %>
+
+      </small>
+
+      <h1 class="fw-bold mt-2">
+
+        <%= product.name %>
+
+      </h1>
+
+      <!-- PRICE -->
+
+      <h2
+        class="
+          text-success
+          fw-bold
+          mt-3
+        "
+      >
+
+        ₹<span id="priceDisplay">
+
+          <% if(product.quantities && product.quantities.length > 0) { %>
+
+            <%= product.quantities[0].price %>
+
+          <% } else { %>
+
+            <%= product.finalPrice || product.price %>
+
+          <% } %>
+
+        </span>
+
+      </h2>
+
+      <!-- DESCRIPTION -->
+
+      <p class="text-muted mt-3">
+
+        <%= product.description ||
+        "Fresh quality product available at ResidentMart." %>
+
+      </p>
+
+      <!-- QUANTITY SELECTOR -->
+
+      <div class="mt-4">
+
+        <label class="fw-bold mb-2">
+
+          Select Quantity
+
+        </label>
+
+        <select
+          id="quantitySelect"
+          class="form-select"
+        >
+
+          <% if(product.quantities && product.quantities.length > 0) { %>
+
+            <% product.quantities.forEach((qty) => { %>
+
+              <option
+                value="<%= qty.price %>"
+                data-pack="<%= qty.label %>"
+              >
+
+                <%= qty.label %> - ₹<%= qty.price %>
+
+              </option>
+
+            <% }) %>
+
+          <% } else { %>
+
+            <option
+              value="<%= product.finalPrice || product.price %>"
+              data-pack="<%= product.unit || '1 Unit' %>"
+            >
+
+              <%= product.unit || "1 Unit" %>
+              -
+              ₹<%= product.finalPrice || product.price %>
+
+            </option>
+
+          <% } %>
+
+        </select>
+
+      </div>
+
+      <!-- BUTTON AREA -->
+
+      <div class="mt-4">
+
+        <% if(!cartItem) { %>
+
+          <!-- ADD BUTTON -->
+
+          <button
+            type="button"
+            class="
+              btn
+              btn-success
+              btn-lg
+              w-100
+            "
+            id="addToCartBtn"
+            data-id="<%= product._id %>"
+          >
+
+            Add to Cart
+
+          </button>
+
+        <% } else { %>
+
+          <!-- QUANTITY BOX -->
+
+          <div
+            class="
+              d-flex
+              justify-content-between
+              align-items-center
+              border
+              rounded
+              overflow-hidden
+            "
+            style="
+              height:60px;
+            "
+          >
+
+            <!-- MINUS -->
+
+            <button
+              type="button"
+              class="
+                btn
+                btn-danger
+                h-100
+                px-4
+                qty-minus
+              "
+              data-id="<%= product._id %>"
+            >
+
+              -
+
+            </button>
+
+            <!-- COUNT -->
+
+            <input
+              type="text"
+              class="qty-input"
+              value="<%= cartItem.cartQuantity %>"
+              style="
+                border:none;
+                text-align:center;
+                font-weight:bold;
+                font-size:1.25rem;
+                flex-grow:1;
+              "
+              readonly
+            >
+
+            <!-- PLUS -->
+
+            <button
+              type="button"
+              class="
+                btn
+                btn-success
+                h-100
+                px-4
+                qty-plus
+              "
+              data-id="<%= product._id %>"
+            >
+
+              +
+
+            </button>
+
+          </div>
+
+        <% } %>
+
+      </div>
+
+      <!-- BACK -->
+
+      <a
+        href="/products"
+        class="
+          btn
+          btn-outline-dark
+          mt-3
+          w-100
+        "
+      >
+
+        Back to Products
+
+      </a>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+// ================= PRICE UPDATE =================
+
+const quantitySelect =
+  document.getElementById(
+    "quantitySelect"
+  );
+
+const priceDisplay =
+  document.getElementById(
+    "priceDisplay"
+  );
+
+if(quantitySelect) {
+
+  quantitySelect.addEventListener(
+    "change",
+    (e) => {
+
+      priceDisplay.innerText =
+        e.target.value;
+
+    }
+  );
+
+}
+
+// ================= ADD TO CART =================
+
+const addBtn =
+  document.getElementById(
+    "addToCartBtn"
+  );
+
+if(addBtn) {
+
+  addBtn.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        const productId =
+          addBtn.dataset.id;
+
+        const selectedOption =
+          quantitySelect.options[
+            quantitySelect.selectedIndex
+          ];
+
+        const pack =
+          selectedOption.dataset.pack;
+
+        const price =
+          selectedOption.value;
+
+        const response =
+          await fetch(
+
+            `/cart/add/${productId}`,
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/x-www-form-urlencoded",
+
+              },
+
+              body:
+                `pack=${encodeURIComponent(pack)}&price=${price}`,
+
+            }
+
+          );
+
+        if(response.ok) {
+
+          location.reload();
+
+        }
+
+      }
+
+      catch(err) {
+
+        console.log(err);
+
+      }
+
+    }
+  );
+
+}
+
+// ================= PLUS BUTTON =================
+
+document.querySelectorAll(
+  ".qty-plus"
+).forEach(btn => {
+
+  btn.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        const productId =
+          btn.dataset.id;
+
+        const selectedOption =
+          quantitySelect.options[
+            quantitySelect.selectedIndex
+          ];
+
+        const pack =
+          selectedOption.dataset.pack;
+
+        const response =
+          await fetch(
+
+            `/cart/increase/${productId}`,
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/x-www-form-urlencoded",
+
+              },
+
+              body:
+                `pack=${encodeURIComponent(pack)}`,
+
+            }
+
+          );
+
+        if(response.ok) {
+
+          location.reload();
+
+        }
+
+      }
+
+      catch(err) {
+
+        console.log(err);
+
+      }
+
+    }
+  );
+
+});
+
+// ================= MINUS BUTTON =================
+
+document.querySelectorAll(
+  ".qty-minus"
+).forEach(btn => {
+
+  btn.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        const productId =
+          btn.dataset.id;
+
+        const selectedOption =
+          quantitySelect.options[
+            quantitySelect.selectedIndex
+          ];
+
+        const pack =
+          selectedOption.dataset.pack;
+
+        const response =
+          await fetch(
+
+            `/cart/decrease/${productId}`,
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/x-www-form-urlencoded",
+
+              },
+
+              body:
+                `pack=${encodeURIComponent(pack)}`,
+
+            }
+
+          );
+
+        if(response.ok) {
+
+          location.reload();
+
+        }
+
+      }
+
+      catch(err) {
+
+        console.log(err);
+
+      }
+
+    }
+  );
+
+});
+
+</script>

@@ -1,0 +1,435 @@
+<% layout("layouts/boilerplate") %>
+
+<style>
+
+.product-card{
+  transition:0.3s;
+  border-radius:20px;
+  overflow:hidden;
+  background:white;
+}
+
+.product-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 15px 30px rgba(0,0,0,0.08);
+}
+
+.product-image{
+  height:220px;
+  object-fit:contain;
+  padding:20px;
+  background:#f8fafc;
+}
+
+.quantity-box{
+  background:#f8fafc;
+}
+
+.dynamic-price{
+  font-size:24px;
+}
+
+.quantity-dropdown{
+  border-radius:12px;
+  padding:10px;
+  border:1px solid #e2e8f0;
+  font-weight:600;
+  background:#f8fafc;
+}
+
+.quantity-dropdown:focus{
+  box-shadow:none;
+  border-color:#22c55e;
+}
+
+.add-btn{
+  border-radius:12px;
+  padding:10px;
+  font-weight:600;
+}
+
+</style>
+
+<div class="container py-4">
+
+  <% if(searchQuery && searchQuery !== "") { %>
+
+    <div class="mb-4">
+
+      <h3 class="fw-bold">
+
+        Search Results for:
+
+        <span class="text-success">
+
+          "<%= searchQuery %>"
+
+        </span>
+
+      </h3>
+
+    </div>
+
+  <% } %>
+
+  <% if(Object.keys(grouped).length === 0) { %>
+
+    <div class="text-center bg-white p-5 rounded-4 shadow-sm">
+
+      <img
+        src="https://cdn-icons-png.flaticon.com/512/6134/6134065.png"
+        width="180"
+        class="mb-3"
+      >
+
+      <h3 class="fw-bold text-danger">
+
+        No Products Found
+
+      </h3>
+
+      <p class="text-muted">
+
+        We could not find products matching
+
+        <strong>
+
+          "<%= searchQuery %>"
+
+        </strong>
+
+      </p>
+
+      <a
+        href="/products"
+        class="btn btn-success rounded-pill px-4"
+      >
+
+        Browse Products
+
+      </a>
+
+    </div>
+
+  <% } %>
+
+  <% Object.keys(grouped).forEach(category => { %>
+
+    <h3 class="fw-bold mt-5 mb-4">
+
+      <%= category %>
+
+    </h3>
+
+    <div class="row g-4">
+
+      <% grouped[category].forEach(product => { %>
+
+        <%
+
+          const cartItem =
+            cart.find(
+
+              item =>
+
+                item.productId ===
+                product._id.toString()
+
+            );
+
+          const defaultQuantity =
+            product.quantities &&
+            product.quantities.length > 0
+
+              ? product.quantities[0]
+
+              : {
+
+                  label:"1 Unit",
+
+                  price:0
+
+                };
+
+        %>
+
+        <div class="col-lg-3 col-md-4 col-sm-6">
+
+          <div
+            class="
+              card
+              product-card
+              border-0
+              h-100
+            "
+
+            data-pack="<%= defaultQuantity.label %>"
+            data-price="<%= defaultQuantity.price %>"
+          >
+
+            <!-- IMAGE -->
+
+            <a
+              href="/products/<%= product._id %>"
+              class="text-decoration-none text-dark"
+            >
+
+              <img
+                src="<%= product.image %>"
+                class="
+                  card-img-top
+                  product-image
+                "
+              >
+
+            </a>
+
+            <div class="card-body d-flex flex-column">
+
+              <!-- BRAND -->
+
+              <small class="text-muted">
+
+                <%= product.brand || "ResidentMart" %>
+
+              </small>
+
+              <!-- PRODUCT NAME -->
+
+              <a
+                href="/products/<%= product._id %>"
+                class="
+                  text-decoration-none
+                  text-dark
+                "
+              >
+
+                <h5 class="fw-bold mt-2">
+
+                  <%= product.name %>
+
+                </h5>
+
+              </a>
+
+              <!-- CATEGORY -->
+
+              <small class="text-muted mb-2">
+
+                <%= product.category %>
+
+              </small>
+
+              <!-- PRICE -->
+
+              <h3
+                class="
+                  text-success
+                  fw-bold
+                  dynamic-price
+                  mb-3
+                "
+              >
+
+                ₹<span class="price-value">
+
+                  <%= defaultQuantity.price %>
+
+                </span>
+
+              </h3>
+
+              <!-- QUANTITY DROPDOWN -->
+
+              <select
+                class="
+                  form-select
+                  quantity-dropdown
+                  mb-3
+                "
+              >
+
+                <% if(product.quantities && product.quantities.length > 0) { %>
+
+                  <% product.quantities.forEach(qty => { %>
+
+                    <option
+                      value="<%= qty.price %>"
+                      data-pack="<%= qty.label %>"
+                    >
+
+                      <%= qty.label %> → ₹<%= qty.price %>
+
+                    </option>
+
+                  <% }) %>
+
+                <% } %>
+
+              </select>
+
+              <!-- BUTTON AREA -->
+
+
+              <div class="mt-auto">
+                <button  class="    btn    btn-success    add-btn  "  data-id="<%= product._id %>"  data-pack="<%= defaultQuantity.label %>"  data-price="<%= defaultQuantity.price %>">  Add +</button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      <% }) %>
+
+    </div>
+
+  <% }) %>
+
+</div>
+
+<script>
+
+// ================= QUANTITY DROPDOWN =================
+
+document
+.querySelectorAll(".quantity-dropdown")
+.forEach((dropdown) => {
+
+  dropdown.addEventListener(
+    "change",
+
+    function() {
+
+      const selectedOption =
+        this.options[
+          this.selectedIndex
+        ];
+
+      const card =
+        this.closest(
+          ".product-card"
+        );
+
+      const pack =
+        selectedOption.dataset.pack;
+
+      const price =
+        selectedOption.value;
+
+      // UPDATE PRICE
+
+      card.querySelector(
+        ".price-value"
+      ).innerText =
+        price;
+
+      // UPDATE BUTTON DATA
+
+      const addBtn =
+        card.querySelector(
+          ".add-btn"
+        );
+
+      addBtn.dataset.pack =
+        pack;
+
+      addBtn.dataset.price =
+        price;
+
+    }
+
+  );
+
+});
+
+// ================= ADD TO CART =================
+
+document
+.querySelectorAll(".add-btn")
+.forEach((btn) => {
+
+  btn.addEventListener(
+    "click",
+
+    async () => {
+
+      try {
+
+        const id =
+          btn.dataset.id;
+
+        const pack =
+          btn.dataset.pack;
+
+        const price =
+          btn.dataset.price;
+
+        btn.innerText =
+          "Adding...";
+
+        const response =
+          await fetch(
+
+            `/cart/add/${id}`,
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                "application/json"
+
+              },
+
+              body: JSON.stringify({
+
+                pack,
+                price
+
+              })
+
+            }
+
+          );
+
+        const data =
+          await response.json();
+
+        // UPDATE CART BADGE
+
+        document.getElementById(
+          "cart-count"
+        ).innerText =
+          data.cartCount;
+
+        // SUCCESS UI
+
+        btn.innerText =
+          "Added ✓";
+
+        setTimeout(() => {
+
+          btn.innerText =
+            "Add +";
+
+        }, 1000);
+
+      }
+
+      catch(err) {
+
+        console.log(err);
+
+      }
+
+    }
+
+  );
+
+});
+
+</script>

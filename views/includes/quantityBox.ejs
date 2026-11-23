@@ -1,0 +1,26 @@
+<div
+  class="quantity-box d-flex justify-content-between align-items-center border rounded-3 px-3 py-2"
+>
+  <!-- MINUS -->
+  <button
+    type="button"
+    class="btn btn-danger btn-sm decrease-quantity"
+    data-id="<%= productId %>"
+  >
+    -
+  </button>
+
+  <!-- COUNT -->
+  <span class="fw-bold count-number">
+    <%= cartQuantity %>
+  </span>
+
+  <!-- PLUS -->
+  <button
+    type="button"
+    class="btn btn-success btn-sm increase-quantity"
+    data-id="<%= productId %>"
+  >
+    +
+  </button>
+</div>
